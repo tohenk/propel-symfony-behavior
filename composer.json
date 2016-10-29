@@ -23,5 +23,9 @@
 		"psr-0" : {
 			"NTLAB\\Propel\\Behavior\\" : "src/"
 		}
+	},
+	"extra": {
+		"name": "symfony",
+		"class": "NTLAB\\Propel\\Behavior\\SymfonyBehavior"
 	}
 }
