@@ -11,7 +11,7 @@ class MixinBehavior extends Base
 {
     protected function getMixinClassName($base = true)
     {
-      return ($base ? 'Base' : '').$this->getTable()->getPhpName();
+        return $this->getTable()->getNamespace().'\\'.($base ? 'Base\\' : '').$this->getTable()->getPhpName();
     }
 
     public function preDelete($builder)
@@ -64,8 +64,7 @@ class MixinBehavior extends Base
         if ($this->isDisabled()) {
             return;
         }
-
-        if ($this->getTable()->getAttribute('behaviors')) {
+        if ($this->getTable()->hasBehavior('symfony_mixin')) {
             $script .= $this->getBehaviorsInclude($builder);
             $this->createBehaviorsFile($builder);
         }
@@ -83,8 +82,9 @@ class MixinBehavior extends Base
         if (file_exists($file = $this->getBehaviorsFilePath($builder, true))) {
             unlink($file);
         }
-        if ($behaviors = $this->getTable()->getAttribute('behaviors')) {
-            $code = $this->renderTemplate('mixinBehavior', array('method' => $this->getProperty('mixinBehaviorRegisterMethod'), 'class' => $this->getMixinClassName(false), 'parameters' => var_export(unserialize($behaviors), true)));
+        if ($configuration = $this->getTable()->getBehavior('symfony_mixin')) {
+            $behaviors = $configuration->getParameter('behaviors');
+            $code = $this->renderTemplate('mixinBehavior', array('method' => $this->getProperty('mixinBehaviorRegisterMethod'), 'class' => $this->getMixinClassName(false), 'parameters' => var_export($behaviors, true)));
             file_put_contents($file, $code);
 
             return true;
@@ -100,7 +100,7 @@ class MixinBehavior extends Base
     {
         return <<<EOF
 
-// symfony mixin behavior
+// symfony behavior
 include '{$this->getBehaviorsFilePath($builder)}';
 
 EOF;
