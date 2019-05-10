@@ -14,15 +14,22 @@ class SymfonyBehavior extends Base
 
     public function modifyDatabase()
     {
+        $forced = $this->getProperty('enableSymfonyBehavior', true);
         foreach ($this->getDatabase()->getTables() as $table) {
-            if (!$configuration = $table->getBehavior('symfony')) {
+            if (!($behavior = $table->getBehavior('symfony')) && !$forced) {
                 continue;
             }
 
-            $behavior = clone $this;
-            $table->addBehavior($behavior);
+            if (!$behavior) {
+                $behavior = clone $this;
+                $table->addBehavior($behavior);
+            }
 
-            $behaviors = unserialize(html_entity_decode($configuration->getParameter('params')));
+            $behaviors = array();
+            $parameters = $behavior->getParameters();
+            if (isset($parameters['params'])) {
+                $behaviors = unserialize(html_entity_decode($parameters['params']));
+            }
 
             // symfony mixin
             if (!isset($behaviors['symfony_mixin']) && $this->getProperty('enableMixinBehavior', true)) {

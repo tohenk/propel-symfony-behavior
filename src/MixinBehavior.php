@@ -65,8 +65,9 @@ class MixinBehavior extends Base
             return;
         }
         if ($this->getTable()->hasBehavior('symfony_mixin')) {
-            $script .= $this->getBehaviorsInclude($builder);
-            $this->createBehaviorsFile($builder);
+            if ($this->createBehaviorsFile($builder)) {
+                $script .= $this->getBehaviorsInclude($builder);
+            }
         }
     }
 
@@ -83,11 +84,12 @@ class MixinBehavior extends Base
             unlink($file);
         }
         if ($configuration = $this->getTable()->getBehavior('symfony_mixin')) {
-            $behaviors = $configuration->getParameter('behaviors');
-            $code = $this->renderTemplate('mixinBehavior', array('method' => $this->getProperty('mixinBehaviorRegisterMethod'), 'class' => $this->getMixinClassName(false), 'parameters' => var_export($behaviors, true)));
-            file_put_contents($file, $code);
+            if (count($behaviors = $configuration->getParameter('behaviors'))) {
+                $code = $this->renderTemplate('mixinBehavior', array('method' => $this->getProperty('mixinBehaviorRegisterMethod'), 'class' => $this->getMixinClassName(false), 'parameters' => var_export($behaviors, true)));
+                file_put_contents($file, $code);
 
-            return true;
+                return true;
+            }
         }
     }
 
