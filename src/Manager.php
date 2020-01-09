@@ -2,8 +2,6 @@
 
 namespace NTLAB\Propel\Behavior;
 
-use Propel\Generator\Model\Behavior;
-
 class Manager
 {
     protected static $instance = null;
