@@ -20,7 +20,8 @@ class MixinBehavior extends Base
             return;
         }
 
-        return $this->renderTemplate('mixinPreDelete', array('method' => $this->getProperty('mixinCallablesMethod'), 'class' => $this->getMixinClassName()));
+        return $this->renderTemplate('mixinPreDelete', ['method' => $this->getProperty('mixinCallablesMethod'), 'class' => $this->getMixinClassName()],
+            $this->getTemplatesDir());
     }
 
     public function postDelete($builder)
@@ -29,7 +30,8 @@ class MixinBehavior extends Base
             return;
         }
 
-        return $this->renderTemplate('mixinPostDelete', array('method' => $this->getProperty('mixinCallablesMethod'), 'class' => $this->getMixinClassName()));
+        return $this->renderTemplate('mixinPostDelete', ['method' => $this->getProperty('mixinCallablesMethod'), 'class' => $this->getMixinClassName()],
+            $this->getTemplatesDir());
     }
 
     public function preSave($builder)
@@ -38,7 +40,8 @@ class MixinBehavior extends Base
             return;
         }
 
-        return $this->renderTemplate('mixinPreSave', array('method' => $this->getProperty('mixinCallablesMethod'), 'class' => $this->getMixinClassName()));
+        return $this->renderTemplate('mixinPreSave', ['method' => $this->getProperty('mixinCallablesMethod'), 'class' => $this->getMixinClassName()],
+            $this->getTemplatesDir());
     }
 
     public function postSave($builder)
@@ -47,7 +50,8 @@ class MixinBehavior extends Base
           return;
       }
 
-      return $this->renderTemplate('mixinPostSave', array('method' => $this->getProperty('mixinCallablesMethod'), 'class' => $this->getMixinClassName()));
+      return $this->renderTemplate('mixinPostSave', ['method' => $this->getProperty('mixinCallablesMethod'), 'class' => $this->getMixinClassName()],
+            $this->getTemplatesDir());
     }
 
     public function objectCall($builder)
@@ -56,7 +60,8 @@ class MixinBehavior extends Base
             return;
         }
 
-        return $this->renderTemplate('mixinObjectCall', array('method' => $this->getProperty('mixinCallableMethod'), 'class' => $this->getMixinClassName()));
+        return $this->renderTemplate('mixinObjectCall', ['method' => $this->getProperty('mixinCallableMethod'), 'class' => $this->getMixinClassName()],
+            $this->getTemplatesDir());
     }
   
     public function objectFilter(&$script, $builder)
@@ -85,7 +90,8 @@ class MixinBehavior extends Base
         }
         if ($configuration = $this->getTable()->getBehavior('symfony_mixin')) {
             if (count($behaviors = $configuration->getParameter('behaviors'))) {
-                $code = $this->renderTemplate('mixinBehavior', array('method' => $this->getProperty('mixinBehaviorRegisterMethod'), 'class' => $this->getMixinClassName(false), 'parameters' => var_export($behaviors, true)));
+                $code = $this->renderTemplate('mixinBehavior', ['method' => $this->getProperty('mixinBehaviorRegisterMethod'), 'class' => $this->getMixinClassName(false), 'parameters' => var_export($behaviors, true)],
+                    $this->getTemplatesDir());
                 file_put_contents($file, $code);
 
                 return true;

@@ -8,11 +8,11 @@ class SymfonyBehavior extends Base
 {
     protected function configure()
     {
-        $this->addParameter(array('name' => 'form', 'value' => 'true'));
-        $this->addParameter(array('name' => 'filter', 'value' => 'true'));
+        $this->addParameter(['name' => 'form', 'value' => 'true']);
+        $this->addParameter(['name' => 'filter', 'value' => 'true']);
     }
 
-    public function modifyDatabase()
+    public function modifyDatabase(): void
     {
         $forced = $this->getProperty('enableSymfonyBehavior', true);
         foreach ($this->getDatabase()->getTables() as $table) {
@@ -25,7 +25,7 @@ class SymfonyBehavior extends Base
                 $table->addBehavior($behavior);
             }
 
-            $behaviors = array();
+            $behaviors = [];
             $parameters = $behavior->getParameters();
             if (isset($parameters['params'])) {
                 $behaviors = unserialize(html_entity_decode($parameters['params']));
@@ -35,19 +35,19 @@ class SymfonyBehavior extends Base
             if (!isset($behaviors['symfony_mixin']) && $this->getProperty('enableMixinBehavior', true)) {
                 $behavior = new MixinBehavior();
                 $behavior->setName('symfony_mixin');
-                $behavior->addParameter(array('name' => 'behaviors', 'value' => $behaviors));
+                $behavior->addParameter(['name' => 'behaviors', 'value' => $behaviors]);
                 $table->addBehavior($behavior);
             }
 
             // timestampable
             if (!isset($behaviors['timestampable'])) {
-                $parameters = array();
+                $parameters = [];
                 foreach ($table->getColumns() as $column) {
-                    if (!isset($parameters['create_column']) && in_array($column->getName(), array('created_at', 'created_on'))) {
+                    if (!isset($parameters['create_column']) && in_array($column->getName(), ['created_at', 'created_on'])) {
                         $parameters['create_column'] = $column->getName();
                     }
 
-                    if (!isset($parameters['update_column']) && in_array($column->getName(), array('updated_at', 'updated_on'))) {
+                    if (!isset($parameters['update_column']) && in_array($column->getName(), ['updated_at', 'updated_on'])) {
                         $parameters['update_column'] = $column->getName();
                     }
                 }
@@ -62,7 +62,7 @@ class SymfonyBehavior extends Base
                     $behavior = new TimestampableBehavior();
                     $behavior->setName('timestampable');
                     foreach ($parameters as $param => $value) {
-                        $behavior->addParameter(array('name' => $param, 'value' => $value));
+                        $behavior->addParameter(['name' => $param, 'value' => $value]);
                     }
                     $table->addBehavior($behavior);
                 }
@@ -76,13 +76,13 @@ class SymfonyBehavior extends Base
             return;
         }
 
-        $unices = array();
+        $unices = [];
         foreach ($this->getTable()->getUnices() as $unique)
         {
-          $unices[] = sprintf("array('%s')", implode("', '", $unique->getColumns()));
+            $unices[] = sprintf("['%s']", implode("', '", $unique->getColumns()));
         }
         $unices = implode(', ', array_unique($unices));
 
-        return $this->renderTemplate('uniqueColumns', array('unices' => $unices));
+        return $this->renderTemplate('uniqueColumns', ['unices' => $unices], $this->getTemplatesDir());
     }
 }

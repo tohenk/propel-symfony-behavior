@@ -53,4 +53,9 @@ abstract class Base extends Behavior
     {
         return $this->booleanValue($this->getParameter('disabled'));
     }
+
+    protected function getTemplatesDir()
+    {
+        return __DIR__.DIRECTORY_SEPARATOR.'templates'.DIRECTORY_SEPARATOR;
+    }
 }
