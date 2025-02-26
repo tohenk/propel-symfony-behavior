@@ -3,6 +3,7 @@
 namespace NTLAB\Propel\Behavior;
 
 use Propel\Generator\Builder\Om\ClassTools;
+use NTLAB\Object\PHP as PHPObj;
 
 /**
  * Adds support for symfony's {@link sfMixer} behaviors.
@@ -90,7 +91,7 @@ class MixinBehavior extends Base
         }
         if ($configuration = $this->getTable()->getBehavior('symfony_mixin')) {
             if (count($behaviors = $configuration->getParameter('behaviors'))) {
-                $code = $this->renderTemplate('mixinBehavior', ['method' => $this->getProperty('mixinBehaviorRegisterMethod'), 'class' => $this->getMixinClassName(false), 'parameters' => var_export($behaviors, true)],
+                $code = $this->renderTemplate('mixinBehavior', ['method' => $this->getProperty('mixinBehaviorRegisterMethod'), 'class' => $this->getMixinClassName(false), 'parameters' => PHPObj::create($behaviors)],
                     $this->getTemplatesDir());
                 file_put_contents($file, $code);
 

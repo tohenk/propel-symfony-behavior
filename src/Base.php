@@ -20,7 +20,7 @@ abstract class Base extends Behavior
     public function __construct()
     {
         $this->manager = Manager::getInstance();
-        $this->addParameter(array('name' => 'disabled', 'value' => 'false'));
+        $this->addParameter(['name' => 'disabled', 'value' => 'false']);
         $this->configure();
     }
 

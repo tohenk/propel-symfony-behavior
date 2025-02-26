@@ -6,5 +6,5 @@
  */
 public static function getUniqueColumnNames()
 {
-    return array(<?= $unices ?>);
+    return [<?= $unices ?>];
 }

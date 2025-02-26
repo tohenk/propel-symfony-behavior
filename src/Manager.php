@@ -6,7 +6,7 @@ class Manager
 {
     protected static $instance = null;
 
-    protected $properties = array();
+    protected $properties = [];
 
     /**
      * Get manager instance.
