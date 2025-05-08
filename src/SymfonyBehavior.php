@@ -4,6 +4,11 @@ namespace NTLAB\Propel\Behavior;
 
 use Propel\Generator\Behavior\Timestampable\TimestampableBehavior;
 
+/**
+ * Apply symfony default behavior such as mixin and timestampable.
+ *
+ * @author Toha <tohenk@yahoo.com>
+ */
 class SymfonyBehavior extends Base
 {
     protected function configure()

@@ -6,6 +6,8 @@ use Propel\Generator\Model\Behavior;
 
 /**
  * Base behavior class.
+ *
+ * @author Toha <tohenk@yahoo.com>
  */
 abstract class Base extends Behavior
 {

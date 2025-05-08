@@ -2,6 +2,11 @@
 
 namespace NTLAB\Propel\Behavior;
 
+/**
+ * Symfony Propel behavior manager.
+ *
+ * @author Toha <tohenk@yahoo.com>
+ */
 class Manager
 {
     protected static $instance = null;
@@ -28,7 +33,8 @@ class Manager
     public function __construct()
     {
         $this->setProperty('enableMixinBehavior', true);
-        $this->setProperty('mixinBehaviorRegisterMethod', 'sfPropelBehavior::add');
+        $this->setProperty('mixinBehaviorRegisterMethod', '\sfPropelBehavior::add');
+        $this->setProperty('mixinBehaviorGetVirtualMethods', '\sfPropelBehavior::getMethods');
         $this->setProperty('mixinCallableMethod', '\sfMixer::getCallable');
         $this->setProperty('mixinCallablesMethod', '\sfMixer::getCallables');
     }
