@@ -80,6 +80,11 @@ abstract class Base extends Behavior
         return $this->booleanValue($this->getParameter('disabled'));
     }
 
+    /**
+     * Get templates builder directory.
+     *
+     * @return string
+     */
     protected function getTemplatesDir()
     {
         return __DIR__.DIRECTORY_SEPARATOR.'..'.DIRECTORY_SEPARATOR.'templates'.DIRECTORY_SEPARATOR;

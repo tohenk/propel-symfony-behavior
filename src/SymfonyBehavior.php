@@ -45,7 +45,7 @@ class SymfonyBehavior extends Base
     {
         $forced = $this->getProperty('enableSymfonyBehavior', true);
         foreach ($this->getDatabase()->getTables() as $table) {
-            if (!($behavior = $table->getBehavior('symfony')) && !$forced) {
+            if (!($behavior = $table->getBehavior(Manager::BEHAVIOR_SYMFONY)) && !$forced) {
                 continue;
             }
 
@@ -61,15 +61,12 @@ class SymfonyBehavior extends Base
             }
 
             // symfony mixin
-            if (!isset($behaviors['symfony_mixin']) && $this->getProperty('enableMixinBehavior', true)) {
-                $behavior = new MixinBehavior();
-                $behavior->setName('symfony_mixin');
-                $behavior->addParameter(['name' => 'behaviors', 'value' => $behaviors]);
-                $table->addBehavior($behavior);
+            if (!isset($behaviors[Manager::BEHAVIOR_MIXIN]) && $this->getProperty('enableMixinBehavior')) {
+                $table->addBehavior(MixinBehavior::create($behaviors));
             }
 
             // timestampable
-            if (!isset($behaviors['timestampable'])) {
+            if (!isset($behaviors[Manager::BEHAVIOR_TIMESTAMPABLE])) {
                 $parameters = [];
                 foreach ($table->getColumns() as $column) {
                     if (!isset($parameters['create_column']) && in_array($column->getName(), ['created_at', 'created_on'])) {
@@ -89,7 +86,7 @@ class SymfonyBehavior extends Base
                         $parameters['disable_updated_at'] = 'true';
                     }
                     $behavior = new TimestampableBehavior();
-                    $behavior->setName('timestampable');
+                    $behavior->setName(Manager::BEHAVIOR_TIMESTAMPABLE);
                     foreach ($parameters as $param => $value) {
                         $behavior->addParameter(['name' => $param, 'value' => $value]);
                     }
@@ -99,19 +96,20 @@ class SymfonyBehavior extends Base
         }
     }
 
+    /**
+     * @param \Propel\Generator\Builder\Om\AbstractOMBuilder $builder
+     */
     public function objectMethods($builder)
     {
-        if ($this->isDisabled()) {
-            return;
-        }
+        if (!$this->isDisabled()) {
+            $unices = [];
+            foreach ($this->getTable()->getUnices() as $unique)
+            {
+                $unices[] = sprintf("['%s']", implode("', '", $unique->getColumns()));
+            }
+            $unices = implode(', ', array_unique($unices));
 
-        $unices = [];
-        foreach ($this->getTable()->getUnices() as $unique)
-        {
-            $unices[] = sprintf("['%s']", implode("', '", $unique->getColumns()));
+            return $this->renderTemplate('uniqueColumns', ['unices' => $unices], $this->getTemplatesDir());
         }
-        $unices = implode(', ', array_unique($unices));
-
-        return $this->renderTemplate('uniqueColumns', ['unices' => $unices], $this->getTemplatesDir());
     }
 }

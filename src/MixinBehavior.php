@@ -26,8 +26,8 @@
 
 namespace NTLAB\Propel\Behavior;
 
-use Propel\Generator\Builder\Om\ClassTools;
 use NTLAB\Object\PHP as PHPObj;
+use Propel\Generator\Builder\Om\ClassTools;
 
 /**
  * Adds support for symfony's {@link sfMixer} behavior.
@@ -36,70 +36,80 @@ use NTLAB\Object\PHP as PHPObj;
  */
 class MixinBehavior extends Base
 {
+    public const BEHAVIORS_PARAMETER = 'behaviors';
+
     protected function getMixinClassName($base = true)
     {
         return $this->getTable()->getNamespace().'\\'.($base ? 'Base\\' : '').$this->getTable()->getPhpName();
     }
 
-    public function preDelete($builder)
+    /**
+     * Get registered behaviors for current table.
+     *
+     * @return array
+     */
+    protected function getBehaviors()
     {
-        if ($this->isDisabled()) {
-            return;
+        $behaviors = [];
+        if ($configuration = $this->getTable()->getBehavior(Manager::BEHAVIOR_MIXIN)) {
+            $behaviors = $configuration->getParameter(static::BEHAVIORS_PARAMETER);
         }
 
-        return $this->renderTemplate('mixinPreDelete', ['method' => $this->getProperty('mixinCallablesMethod'), 'class' => $this->getMixinClassName()],
-            $this->getTemplatesDir());
+        return $behaviors;
     }
 
-    public function postDelete($builder)
+    /**
+     * Render mixin builder.
+     *
+     * @param string $type
+     * @return string
+     */
+    protected function renderMixinBuilder($type)
     {
-        if ($this->isDisabled()) {
-            return;
-        }
-
-        return $this->renderTemplate('mixinPostDelete', ['method' => $this->getProperty('mixinCallablesMethod'), 'class' => $this->getMixinClassName()],
-            $this->getTemplatesDir());
-    }
-
-    public function preSave($builder)
-    {
-        if ($this->isDisabled()) {
-            return;
-        }
-
-        return $this->renderTemplate('mixinPreSave', ['method' => $this->getProperty('mixinCallablesMethod'), 'class' => $this->getMixinClassName()],
-            $this->getTemplatesDir());
-    }
-
-    public function postSave($builder)
-    {
-      if ($this->isDisabled()) {
-          return;
-      }
-
-      return $this->renderTemplate('mixinPostSave', ['method' => $this->getProperty('mixinCallablesMethod'), 'class' => $this->getMixinClassName()],
-            $this->getTemplatesDir());
-    }
-
-    public function objectCall($builder)
-    {
-        if ($this->isDisabled()) {
-            return;
-        }
-
-        return $this->renderTemplate('mixinObjectCall', ['method' => $this->getProperty('mixinCallableMethod'), 'class' => $this->getMixinClassName()],
-            $this->getTemplatesDir());
-    }
-  
-    public function objectFilter(&$script, $builder)
-    {
-        if ($this->isDisabled()) {
-            return;
-        }
-        if ($this->getTable()->hasBehavior('symfony_mixin')) {
-            if ($this->createBehaviorsFile($builder, $script)) {
-                $script .= $this->getBehaviorsInclude($builder);
+        if (!$this->isDisabled()) {
+            if (count($behaviors = $this->getBehaviors())) {
+                $result = [];
+                if ($buildersCallable = $this->getProperty('mixinBehaviorGetBuilders')) {
+                    if (false !== strpos($buildersCallable, '::')) {
+                        $buildersCallable = explode('::', $buildersCallable);
+                    }
+                    if (is_callable($buildersCallable)) {
+                        foreach ($behaviors as $behavior => $parameter) {
+                            if (is_array($buildersCallables = call_user_func($buildersCallable, $behavior))) {
+                                foreach ($buildersCallables as $key => $callable) {
+                                    if ($key === $type && is_callable($callable) && $retval = call_user_func($callable, $this, $parameter)) {
+                                        $result[] = $retval;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                if (count($result)) {
+                    return strtr(implode("\n", $result), [
+                        'self' => '\\'.$this->getMixinClassName(),
+                    ]);
+                }
             }
+        }
+    }
+
+    /**
+     * Render mixin template.
+     *
+     * @param string $template
+     * @param array $vars
+     * @return string
+     */
+    protected function renderMixinTemplate($template, $vars = [])
+    {
+        if (!$this->isDisabled()) {
+            return $this->renderTemplate($template, array_merge([
+                'callables' => $this->getProperty('mixinCallablesMethod'),
+                'callable' => $this->getProperty('mixinCallableMethod'),
+                'class' => $this->getMixinClassName(),
+                'model' => $this->getTable()->getPhpName(),
+            ], $vars), $this->getTemplatesDir());
         }
     }
 
@@ -108,15 +118,17 @@ class MixinBehavior extends Base
      *
      * Any existing behaviors file will be either deleted or overwritten.
      *
-     * @return boolean Returns true if the model has behaviors
+     * @param \Propel\Generator\Builder\Om\AbstractOMBuilder $builder
+     * @param string $script
+     * @return void
      */
-    protected function createBehaviorsFile($builder, &$script)
+    protected function createObjectBehaviors($builder, &$script)
     {
-        if (file_exists($file = $this->getBehaviorsFilePath($builder, true))) {
-            unlink($file);
-        }
-        if ($configuration = $this->getTable()->getBehavior('symfony_mixin')) {
-            if (count($behaviors = $configuration->getParameter('behaviors'))) {
+        if (!$this->isDisabled()) {
+            if (file_exists($file = $this->getBehaviorsFilePath($builder, true))) {
+                unlink($file);
+            }
+            if (count($behaviors = $this->getBehaviors())) {
                 if ($virtualMethodsCallable = $this->getProperty('mixinBehaviorGetVirtualMethods')) {
                     if (false !== strpos($virtualMethodsCallable, '::')) {
                         $virtualMethodsCallable = explode('::', $virtualMethodsCallable);
@@ -129,11 +141,14 @@ class MixinBehavior extends Base
                         }
                     }
                 }
-                $code = $this->renderTemplate('mixinBehavior', ['method' => $this->getProperty('mixinBehaviorRegisterMethod'), 'class' => $this->getMixinClassName(false), 'parameters' => PHPObj::create($behaviors)],
-                    $this->getTemplatesDir());
-                file_put_contents($file, $code);
+                file_put_contents($file, $this->renderTemplate('behavior', [
+                    'method' => $this->getProperty('mixinBehaviorRegisterMethod'),
+                    'class' => $this->getMixinClassName(false),
+                    'model' => $this->getTable()->getPhpName(),
+                    'parameters' => PHPObj::create($behaviors),
+                ], $this->getTemplatesDir()));
 
-                return true;
+                $script .= $this->getBehaviorsInclude($builder);
             }
         }
     }
@@ -161,6 +176,7 @@ class MixinBehavior extends Base
     /**
      * Returns PHP code for including the current model's behaviors configuration file.
      *
+     * @param \Propel\Generator\Builder\Om\AbstractOMBuilder $builder
      * @return string
      */
     protected function getBehaviorsInclude($builder)
@@ -186,6 +202,7 @@ EOF;
     /**
      * Returns the path to the current model's behaviors configuration file.
      *
+     * @param \Propel\Generator\Builder\Om\AbstractOMBuilder $builder
      * @param boolean $absolute
      * @return string
      */
@@ -194,5 +211,109 @@ EOF;
         $base = $absolute ? getcwd().DIRECTORY_SEPARATOR : '';
 
         return $base.ClassTools::createFilePath($builder->getPackagePath(), $this->getBehaviorsFileName());
+    }
+
+    /**
+     * @param \Propel\Generator\Builder\Om\AbstractOMBuilder $builder
+     */
+    public function objectAttributes($builder)
+    {
+        return $this->renderMixinBuilder('attributes');
+    }
+
+    /**
+     * @param \Propel\Generator\Builder\Om\AbstractOMBuilder $builder
+     */
+    public function objectMethods($builder)
+    {
+        return $this->renderMixinBuilder('methods');
+    }
+
+    /**
+     * @param \Propel\Generator\Builder\Om\AbstractOMBuilder $builder
+     */
+    public function objectCall($builder)
+    {
+        return $this->renderMixinTemplate('objectCall');
+    }
+  
+    /**
+     * @param \Propel\Generator\Builder\Om\AbstractOMBuilder $builder
+     */
+    public function postHydrate($builder)
+    {
+        return $this->renderMixinTemplate('postHydrate');
+    }
+
+    /**
+     * @param \Propel\Generator\Builder\Om\AbstractOMBuilder $builder
+     */
+    public function preDelete($builder)
+    {
+        return $this->renderMixinTemplate('preDelete');
+    }
+
+    /**
+     * @param \Propel\Generator\Builder\Om\AbstractOMBuilder $builder
+     */
+    public function postDelete($builder)
+    {
+        return $this->renderMixinTemplate('postDelete');
+    }
+
+    /**
+     * @param \Propel\Generator\Builder\Om\AbstractOMBuilder $builder
+     */
+    public function preSave($builder)
+    {
+        return $this->renderMixinTemplate('preSave');
+    }
+
+    /**
+     * @param \Propel\Generator\Builder\Om\AbstractOMBuilder $builder
+     */
+    public function postSave($builder)
+    {
+        return $this->renderMixinTemplate('postSave');
+    }
+
+    /**
+     * @param string $script
+     * @param \Propel\Generator\Builder\Om\AbstractOMBuilder $builder
+     */
+    public function objectFilter(&$script, $builder)
+    {
+        $this->createObjectBehaviors($builder, $script);
+    }
+
+    /**
+     * @param \Propel\Generator\Builder\Om\AbstractOMBuilder $builder
+     */
+    public function queryAttributes($builder)
+    {
+        return $this->renderMixinBuilder('query-attributes');
+    }
+
+    /**
+     * @param \Propel\Generator\Builder\Om\AbstractOMBuilder $builder
+     */
+    public function queryMethods($builder)
+    {
+        return $this->renderMixinBuilder('query-methods');
+    }
+
+    /**
+     * Create behavior.
+     *
+     * @param array $behaviors
+     * @return \NTLAB\Propel\Behavior\MixinBehavior
+     */
+    public static function create($behaviors)
+    {
+        $behavior = new static();
+        $behavior->setName(Manager::BEHAVIOR_MIXIN);
+        $behavior->addParameter(['name' => static::BEHAVIORS_PARAMETER, 'value' => $behaviors]);
+
+        return $behavior;
     }
 }

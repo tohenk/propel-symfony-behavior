@@ -1,29 +1,31 @@
 {
-	"name" : "ntlab/propel-symfony-behavior",
-	"type" : "propel-behavior",
-	"description" : "Propel 2 Symfony Behavior",
-	"keywords" : [
-		"propel", "propel behavior"
-	],
-	"homepage" : "https://github.com/tohenk/propel-symfony-behavior",
-	"license" : "MIT",
-	"authors" : [{
-			"name" : "Toha",
-			"email" : "tohenk@yahoo.com",
-			"role" : "Developer"
-		}
-	],
-	"require" : {
-		"php" : ">=7.4",
+    "name": "ntlab/propel-symfony-behavior",
+    "type": "propel-behavior",
+    "description": "Propel 2 Symfony Behavior",
+    "keywords": [
+        "propel",
+        "propel behavior"
+    ],
+    "homepage": "https://github.com/tohenk/propel-symfony-behavior",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Toha",
+            "email": "tohenk@yahoo.com",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": ">=7.4",
         "ntlab/php-obj": "^1.8"
-	},
-	"autoload" : {
-		"psr-4" : {
-			"NTLAB\\Propel\\Behavior\\" : "src/"
-		}
-	},
-	"extra": {
-		"name": "symfony",
-		"class": "NTLAB\\Propel\\Behavior\\SymfonyBehavior"
-	}
+    },
+    "autoload": {
+        "psr-4": {
+            "NTLAB\\Propel\\Behavior\\": "src/"
+        }
+    },
+    "extra": {
+        "name": "symfony",
+        "class": "NTLAB\\Propel\\Behavior\\SymfonyBehavior"
+    }
 }

@@ -1,0 +1,5 @@
+<?= "<?php\n" ?>
+
+use <?= $class ?>;
+
+<?= $method ?>(<?= $model ?>::class, <?= $parameters ?>);

@@ -33,6 +33,10 @@ namespace NTLAB\Propel\Behavior;
  */
 class Manager
 {
+    public const BEHAVIOR_SYMFONY = 'symfony';
+    public const BEHAVIOR_MIXIN = 'symfony_mixin';
+    public const BEHAVIOR_TIMESTAMPABLE = 'timestampable';
+
     protected static $instance = null;
 
     protected $properties = [];
@@ -56,11 +60,22 @@ class Manager
      */
     public function __construct()
     {
-        $this->setProperty('enableMixinBehavior', true);
-        $this->setProperty('mixinBehaviorRegisterMethod', '\sfPropelBehavior::add');
-        $this->setProperty('mixinBehaviorGetVirtualMethods', '\sfPropelBehavior::getMethods');
-        $this->setProperty('mixinCallableMethod', '\sfMixer::getCallable');
-        $this->setProperty('mixinCallablesMethod', '\sfMixer::getCallables');
+        if ($configuration = Util::getConfiguration()) {
+            foreach ([
+                'enableMixinBehavior' => 'enabled',
+                'mixinBehaviorRegisterMethod' => 'registerMethod',
+                'mixinBehaviorGetVirtualMethods' => 'getVirtualMethods',
+                'mixinBehaviorGetBuilders' => 'getBuilders',
+                'mixinCallableMethod' => 'callableMethod',
+                'mixinCallablesMethod' => 'callablesMethod',
+            ] as $key => $value) {
+                if (isset($configuration[$value])) {
+                    $this->setProperty($key, $configuration[$value]);
+                }
+            }
+        } else {
+            $this->setProperty('enableMixinBehavior', false);
+        }
     }
 
     /**
